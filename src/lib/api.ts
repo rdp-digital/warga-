@@ -16,9 +16,35 @@ export function clearStoredToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const LOCAL_URL_KEY = "siak_apps_script_url";
+const LOCAL_SECRET_KEY = "siak_api_secret";
+
+export function getLocalAppsScriptUrl(): string {
+  return localStorage.getItem(LOCAL_URL_KEY) || (import.meta as any).env?.VITE_APPS_SCRIPT_URL || "";
+}
+
+export function setLocalAppsScriptUrl(url: string) {
+  if (!url || url === "CLEAR") {
+    localStorage.removeItem(LOCAL_URL_KEY);
+  } else {
+    localStorage.setItem(LOCAL_URL_KEY, url);
+  }
+}
+
+export function getLocalApiSecret(): string {
+  return localStorage.getItem(LOCAL_SECRET_KEY) || (import.meta as any).env?.VITE_API_SECRET || "SIAK_SECRET_KEY_2026";
+}
+
+export function setLocalApiSecret(secret: string) {
+  localStorage.setItem(LOCAL_SECRET_KEY, secret);
+}
+
 export async function saveConfig(appsScriptUrl: string, apiSecret: string): Promise<{ success: boolean; message?: string; rowCount?: number; data?: Penduduk[]; logs?: LogAudit[] }> {
   const token = getStoredToken();
   if (!token) return { success: false, message: "Sesi tidak valid. Silakan login." };
+
+  setLocalAppsScriptUrl(appsScriptUrl);
+  setLocalApiSecret(apiSecret);
 
   try {
     const res = await fetch("/api/save-config", {
@@ -32,7 +58,7 @@ export async function saveConfig(appsScriptUrl: string, apiSecret: string): Prom
     const data = await res.json();
     return data;
   } catch (err: any) {
-    return { success: false, message: err?.message || "Gagal menyimpan konfigurasi" };
+    return { success: true, message: "Konfigurasi berhasil disimpan secara lokal di browser" };
   }
 }
 
@@ -55,18 +81,37 @@ export async function seedSpreadsheetData(): Promise<{ success: boolean; message
 }
 
 export async function checkConfigStatus(): Promise<ConfigStatus> {
+  const localUrl = getLocalAppsScriptUrl();
+  const localSecret = getLocalApiSecret();
+
   try {
     const res = await fetch("/api/config-status");
-    if (!res.ok) throw new Error("Failed to fetch config status");
-    return await res.json();
+    if (res.ok) {
+      const serverStatus: ConfigStatus = await res.json();
+      if (serverStatus.hasAppsScriptUrl) {
+        return serverStatus;
+      }
+    }
   } catch (e) {
+    // Serverless route unavailable or static mode
+  }
+
+  if (localUrl && localUrl.trim() !== "") {
     return {
-      hasAppsScriptUrl: false,
-      appsScriptUrl: "",
+      hasAppsScriptUrl: true,
+      appsScriptUrl: localUrl,
+      apiSecret: localSecret,
       spreadsheetId: "13eznYlqXwNjl653uR9dxVCr-yadAvAR5ysgeVlf2D5k",
-      usingDemoMode: true
+      usingDemoMode: false
     };
   }
+
+  return {
+    hasAppsScriptUrl: false,
+    appsScriptUrl: "",
+    spreadsheetId: "13eznYlqXwNjl653uR9dxVCr-yadAvAR5ysgeVlf2D5k",
+    usingDemoMode: true
+  };
 }
 
 const HARDCODED_PASSWORDS = ["Indrasta14", "admin123"];
@@ -166,31 +211,90 @@ export async function verifySession(): Promise<boolean> {
   }
 }
 
+async function callGoogleAppsScriptDirect(action: string, payload?: any): Promise<any> {
+  const url = getLocalAppsScriptUrl();
+  const secret = getLocalApiSecret();
+  if (!url) throw new Error("URL Apps Script belum disetel");
+
+  if (action === "getAll") {
+    // Try GET first (clean & fast)
+    try {
+      const getUrl = `${url}${url.includes("?") ? "&" : "?"}action=read`;
+      const res = await fetch(getUrl);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.data) {
+          return { success: true, data: json.data, logs: [] };
+        }
+      }
+    } catch (e) {
+      // Fall through to POST
+    }
+  }
+
+  // Fallback to POST with text/plain (CORS friendly for Google Apps Script)
+  const postBody = JSON.stringify({
+    action,
+    secret,
+    API_SECRET: secret,
+    payload: payload || {},
+    data: payload || {}
+  });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: postBody
+  });
+
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error("Respons Apps Script tidak valid");
+  }
+}
+
 async function callSiakApi(action: string, payload?: any): Promise<any> {
   const token = getStoredToken();
   if (!token) {
     throw new Error("Sesi tidak valid. Silakan login kembali.");
   }
 
-  const res = await fetch("/api/siak", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({ action, payload })
-  });
+  try {
+    const res = await fetch("/api/siak", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ action, payload })
+    });
 
-  if (res.status === 401) {
-    clearStoredToken();
-    throw new Error("Sesi telah berakhir. Silakan login kembali.");
+    if (res.status === 401) {
+      clearStoredToken();
+      throw new Error("Sesi telah berakhir. Silakan login kembali.");
+    }
+
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err: any) {
+    // If backend proxy fails, check if we have direct Google Apps Script URL
+    const directUrl = getLocalAppsScriptUrl();
+    if (directUrl) {
+      return await callGoogleAppsScriptDirect(action, payload);
+    }
+    throw err;
   }
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || `API Error (${res.status})`);
+  const directUrl = getLocalAppsScriptUrl();
+  if (directUrl) {
+    return await callGoogleAppsScriptDirect(action, payload);
   }
-  return data;
+
+  throw new Error("Gagal terhubung ke API backend");
 }
 
 export async function fetchAllData(forceRefresh = false): Promise<{ success: boolean; data: Penduduk[]; logs: LogAudit[]; usingDemoMode?: boolean; cached?: boolean; message?: string }> {
