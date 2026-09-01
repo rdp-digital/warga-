@@ -19,20 +19,40 @@ export function clearStoredToken() {
 const LOCAL_URL_KEY = "siak_apps_script_url";
 const LOCAL_SECRET_KEY = "siak_api_secret";
 
+// Built-in Apps Script URL yang ditanam langsung ke dalam aplikasi
+export const DEFAULT_BUILTIN_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6-Il9kInrIRHT9cMnm7wwST2y04irxWIZpyIzuo0Do6FeBL5zUVfdYDPVQ6N6UNIA/exec";
+export const DEFAULT_BUILTIN_API_SECRET = "SIAK_SECRET_KEY_2026";
+
 export function getLocalAppsScriptUrl(): string {
-  return localStorage.getItem(LOCAL_URL_KEY) || (import.meta as any).env?.VITE_APPS_SCRIPT_URL || "";
+  const custom = localStorage.getItem(LOCAL_URL_KEY);
+  if (custom && custom.trim() !== "" && custom !== "CLEAR") {
+    return custom.trim();
+  }
+  const envUrl = (import.meta as any).env?.VITE_APPS_SCRIPT_URL;
+  if (envUrl && envUrl.trim() !== "") {
+    return envUrl.trim();
+  }
+  return DEFAULT_BUILTIN_APPS_SCRIPT_URL;
 }
 
 export function setLocalAppsScriptUrl(url: string) {
   if (!url || url === "CLEAR") {
     localStorage.removeItem(LOCAL_URL_KEY);
   } else {
-    localStorage.setItem(LOCAL_URL_KEY, url);
+    localStorage.setItem(LOCAL_URL_KEY, url.trim());
   }
 }
 
 export function getLocalApiSecret(): string {
-  return localStorage.getItem(LOCAL_SECRET_KEY) || (import.meta as any).env?.VITE_API_SECRET || "SIAK_SECRET_KEY_2026";
+  const custom = localStorage.getItem(LOCAL_SECRET_KEY);
+  if (custom && custom.trim() !== "") {
+    return custom.trim();
+  }
+  const envSecret = (import.meta as any).env?.VITE_API_SECRET;
+  if (envSecret && envSecret.trim() !== "") {
+    return envSecret.trim();
+  }
+  return DEFAULT_BUILTIN_API_SECRET;
 }
 
 export function setLocalApiSecret(secret: string) {
