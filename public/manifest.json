@@ -1,0 +1,70 @@
+{
+  "name": "WARGA+ Sistem Administrasi Desa",
+  "short_name": "WARGA+",
+  "description": "Sistem Informasi Administrasi Kependudukan dan Pelayanan Surat Desa - Data Tepat, Desa Hebat.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#091428",
+  "theme_color": "#091428",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": ["government", "productivity", "utilities", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pelayanan Surat Desa",
+      "short_name": "Surat Desa",
+      "description": "Cetak dan buat surat keterangan desa resmi",
+      "url": "/?tab=surat",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Data Kependudukan",
+      "short_name": "Data Penduduk",
+      "description": "Pencarian NIK, Kartu Keluarga, dan data warga",
+      "url": "/?tab=penduduk",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Data Per RT",
+      "short_name": "Rekap RT",
+      "description": "Rekapitulasi warga per RT",
+      "url": "/?tab=wilayah-rt",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

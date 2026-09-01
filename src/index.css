@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+/* High-Quality Physical Printer & PDF Styles */
+#print-mount-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Force ALL text to solid high-contrast black on paper */
+  body, p, span, h1, h2, h3, h4, h5, h6, th, td, div, b, strong, em, i, a, li, label, dt, dd {
+    color: #000000 !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Force borders to solid black for official government documents */
+  table, th, td, hr, .border, .border-b, .border-t, .border-l, .border-r, .border-b-4, .border-b-2 {
+    border-color: #000000 !important;
+  }
+
+  table {
+    page-break-inside: auto !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  .signature-box, .signatures-row, .signature-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    color: #000000 !important;
+  }
+
+  /* When is-printing-active is set, hide EVERY other element except print-mount-root */
+  body.is-printing-active > #root,
+  body.is-printing-active > *:not(#print-mount-root) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+  }
+
+  body.is-printing-active #print-mount-root {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body.is-printing-active #print-mount-root * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+
+  /* Global hidden elements in print */
+  nav,
+  .no-print,
+  button,
+  #toast-container,
+  .modal-backdrop,
+  header {
+    display: none !important;
+  }
+}
+
+
+

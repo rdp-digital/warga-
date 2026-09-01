@@ -1,0 +1,6 @@
+{
+  "name": "WARGA+",
+  "description": "WARGA+ - Data Tepat, Desa Hebat. Sistem Informasi Administrasi Kependudukan berbasis Google Sheets API.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Rounded Shield -->
+  <rect x="24" y="24" width="464" height="464" rx="100" fill="url(#bgGrad)" stroke="#38bdf8" stroke-width="8" />
+  
+  <!-- House / Structure Badge -->
+  <path d="M 256 100 L 130 210 L 170 210 L 170 340 L 342 340 L 342 210 L 382 210 Z" fill="none" stroke="url(#primaryGrad)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
+  
+  <!-- Leaf / Growth Accent on Roof -->
+  <path d="M 256 100 C 290 80 340 90 350 130 C 350 165 300 180 256 195 C 235 150 240 120 256 100 Z" fill="url(#accentGrad)" opacity="0.9"/>
+  
+  <!-- Community / Family Group inside -->
+  <!-- Left person -->
+  <circle cx="215" cy="245" r="22" fill="#38bdf8" />
+  <path d="M 185 315 C 185 285 245 285 245 315 Z" fill="#38bdf8" />
+  
+  <!-- Right person -->
+  <circle cx="295" cy="245" r="22" fill="#38bdf8" />
+  <path d="M 265 315 C 265 285 325 285 325 315 Z" fill="#38bdf8" />
+  
+  <!-- Center person / leader -->
+  <circle cx="256" cy="225" r="24" fill="#67e8f9" />
+  <path d="M 220 315 C 220 275 292 275 292 315 Z" fill="#67e8f9" />
+  
+  <!-- Plus (+) symbol in bright emerald -->
+  <g transform="translate(350, 310)">
+    <circle cx="25" cy="25" r="38" fill="#10b981" stroke="#ffffff" stroke-width="6"/>
+    <path d="M 25 10 L 25 40 M 10 25 L 40 25" stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
+  </g>
+  
+  <!-- WARGA+ Text -->
+  <text x="256" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="46" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="4">
+    WARGA<tspan fill="#34d399">+</tspan>
+  </text>
+  <text x="256" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="700" fill="#94a3b8" text-anchor="middle" letter-spacing="1.5">
+    DATA TEPAT, DESA HEBAT
+  </text>
+</svg>
