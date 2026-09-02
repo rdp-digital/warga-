@@ -1,13 +1,16 @@
-// WARGA+ Service Worker v2.0
-const CACHE_NAME = 'warga-plus-v2.0';
+// WARGA+ Service Worker v2.1 - Official Village Logo
+const CACHE_NAME = 'warga-plus-v2.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
+  '/favicon.png',
   '/icons/icon.svg',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
+  '/apple-touch-icon.png'
 ];
 
 // Install Event - Pre-cache essential static shell assets

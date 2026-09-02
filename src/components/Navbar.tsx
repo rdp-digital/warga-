@@ -1,6 +1,7 @@
 import React from "react";
 import { LayoutDashboard, Users, FileText, MapPin, History, LogOut, Code, Database, ShieldCheck, Building2 } from "lucide-react";
-import { ConfigStatus } from "../types";
+import { ConfigStatus, VillageProfile } from "../types";
+import { OFFICIAL_MAGETAN_LOGO } from "../lib/profile";
 
 export type ActiveTab = "dashboard" | "penduduk" | "rt" | "kk" | "logs" | "settings";
 
@@ -12,6 +13,7 @@ interface NavbarProps {
   onOpenSetupModal: () => void;
   onLogout: () => void;
   totalPendudukCount: number;
+  villageProfile?: VillageProfile;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -20,20 +22,27 @@ export const Navbar: React.FC<NavbarProps> = ({
   configStatus,
   onOpenSetupModal,
   onLogout,
-  totalPendudukCount
+  totalPendudukCount,
+  villageProfile
 }) => {
+  const currentLogo =
+    villageProfile?.logoUrl && !villageProfile.logoUrl.includes("Screenshot_2026-08-10_074401")
+      ? villageProfile.logoUrl
+      : OFFICIAL_MAGETAN_LOGO;
+  const currentDesa = villageProfile?.namaDesa || "DESA PONCOL";
+
   return (
     <header className="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 p-0.5 flex items-center justify-center overflow-hidden shadow-lg border border-slate-700/60">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center overflow-hidden shadow-lg border border-slate-700/60 shrink-0">
               <img
-                src="https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png"
-                alt="Logo WARGA+"
+                src={currentLogo}
+                alt={`Logo ${currentDesa}`}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>
@@ -46,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   v2.0
                 </span>
               </div>
-              <p className="text-xs text-emerald-400 font-semibold tracking-wide">Data Tepat, Desa Hebat</p>
+              <p className="text-xs text-emerald-400 font-semibold tracking-wide">{currentDesa}</p>
             </div>
           </div>
 
