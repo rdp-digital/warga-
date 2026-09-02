@@ -29,7 +29,7 @@ import { SuratDesaView } from "./components/SuratDesaView";
 import { AppsScriptSetupModal } from "./components/AppsScriptSetupModal";
 import { PWAInstallModal, usePWAInstall } from "./components/PWAInstallModal";
 import { Toast, ToastMessage } from "./components/Toast";
-import { getVillageProfile, saveVillageProfile, fetchServerVillageProfile } from "./lib/profile";
+import { getVillageProfile, saveVillageProfile, fetchServerVillageProfile, OFFICIAL_MAGETAN_LOGO } from "./lib/profile";
 import { loadSuratRecords } from "./lib/suratStorage";
 import { Loader2, RefreshCw, AlertCircle, Info, Database, Menu, X, ShieldCheck, Code2, LogOut, FileText, Download } from "lucide-react";
 
@@ -355,8 +355,13 @@ export default function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginModal onLogin={handleLogin} />;
+    return <LoginModal onLogin={handleLogin} villageProfile={villageProfile} />;
   }
+
+  const currentVillageLogo =
+    villageProfile?.logoUrl && !villageProfile.logoUrl.includes("Screenshot_2026-08-10_074401")
+      ? villageProfile.logoUrl
+      : OFFICIAL_MAGETAN_LOGO;
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-800 flex flex-col lg:flex-row">
@@ -378,26 +383,34 @@ export default function App() {
           onOpenCreateModal={handleOpenCreateModal}
           onOpenInstallModal={() => setIsPWAInstallModalOpen(true)}
           isInstalled={isInstalled}
+          villageProfile={villageProfile}
         />
       </div>
 
       {/* Mobile Top Navbar with Hamburger */}
       <header className="lg:hidden bg-[#091122] text-white p-4 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white/10 p-0.5 flex items-center justify-center overflow-hidden border border-slate-700">
+          <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center overflow-hidden border border-slate-700 shrink-0 shadow-sm">
             <img
-              src="https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png"
-              alt="Logo WARGA+"
+              src={currentVillageLogo}
+              alt={`Logo ${villageProfile?.namaDesa || "Desa"}`}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded"
+              className="w-full h-full object-contain"
             />
           </div>
           <div>
-            <h1 className="font-extrabold text-sm text-white tracking-wider flex items-center gap-0.5">
-              <span>WARGA</span>
-              <span className="text-emerald-400 font-black">+</span>
-            </h1>
-            <p className="text-[9px] text-emerald-400 font-semibold">Data Tepat, Desa Hebat</p>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-black text-sm text-white tracking-wider flex items-center gap-0.5">
+                <span>WARGA</span>
+                <span className="text-emerald-400 font-black">+</span>
+              </h1>
+              <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1 py-0.2 rounded">
+                v2.0
+              </span>
+            </div>
+            <p className="text-[10px] text-emerald-400 font-bold tracking-wide">
+              {villageProfile?.namaDesa || "DESA PONCOL"}
+            </p>
           </div>
         </div>
 
@@ -451,6 +464,7 @@ export default function App() {
                 setIsMobileMenuOpen(false);
               }}
               isInstalled={isInstalled}
+              villageProfile={villageProfile}
             />
           </div>
         </div>
@@ -677,6 +691,7 @@ export default function App() {
         isIOS={isIOS}
         isInstalled={isInstalled}
         isInstallable={isInstallable}
+        villageProfile={villageProfile}
       />
     </div>
   );

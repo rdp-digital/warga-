@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Download, Smartphone, Laptop, Share2, PlusSquare, CheckCircle2, Sparkles, X, ShieldCheck } from "lucide-react";
+import { VillageProfile } from "../types";
+import { OFFICIAL_MAGETAN_LOGO } from "../lib/profile";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -90,6 +92,7 @@ interface PWAInstallModalProps {
   isIOS: boolean;
   isInstalled: boolean;
   isInstallable: boolean;
+  villageProfile?: VillageProfile;
 }
 
 export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
@@ -98,10 +101,17 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   onInstall,
   isIOS,
   isInstalled,
-  isInstallable
+  isInstallable,
+  villageProfile
 }) => {
   const [installing, setInstalling] = useState(false);
   const [installSuccess, setInstallSuccess] = useState(false);
+
+  const currentLogo =
+    villageProfile?.logoUrl && !villageProfile.logoUrl.includes("Screenshot_2026-08-10_074401")
+      ? villageProfile.logoUrl
+      : OFFICIAL_MAGETAN_LOGO;
+  const currentDesa = villageProfile?.namaDesa || "DESA PONCOL";
 
   if (!isOpen) return null;
 
@@ -134,12 +144,12 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 
         {/* Header Hero */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-[#091428] p-6 text-center border-b border-slate-800 relative">
-          <div className="w-20 h-20 mx-auto mb-3 bg-white/10 p-1 rounded-2xl shadow-xl border border-slate-700/80 overflow-hidden flex items-center justify-center relative group">
+          <div className="w-20 h-20 mx-auto mb-3 bg-white p-2 rounded-2xl shadow-xl border border-slate-700/80 overflow-hidden flex items-center justify-center relative group">
             <img
-              src="https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png"
-              alt="WARGA+ App Logo"
+              src={currentLogo}
+              alt={`Logo ${currentDesa}`}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded-xl shadow-md"
+              className="max-w-full max-h-full object-contain"
             />
           </div>
 
@@ -151,6 +161,9 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           <h2 className="text-xl font-black text-white tracking-tight">
             Instal Aplikasi <span className="text-emerald-400">WARGA+</span>
           </h2>
+          <p className="text-xs text-emerald-400 font-bold mt-0.5">
+            {currentDesa}
+          </p>
           <p className="text-xs text-slate-300 mt-1 max-w-xs mx-auto">
             Pasang di HP Android, iPhone, Windows, atau Mac Anda untuk akses instan tanpa perlu membuka browser.
           </p>

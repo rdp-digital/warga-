@@ -14,7 +14,8 @@ import {
   Download,
   Smartphone
 } from "lucide-react";
-import { ConfigStatus } from "../types";
+import { ConfigStatus, VillageProfile } from "../types";
+import { OFFICIAL_MAGETAN_LOGO } from "../lib/profile";
 
 export type ActiveTab = "dashboard" | "surat" | "penduduk" | "rt" | "kk" | "logs" | "settings";
 
@@ -31,6 +32,7 @@ interface SidebarProps {
   onOpenCreateModal?: () => void;
   onOpenInstallModal?: () => void;
   isInstalled?: boolean;
+  villageProfile?: VillageProfile;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -44,8 +46,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   auditLogsCount,
   totalSuratCount = 0,
   onOpenInstallModal,
-  isInstalled = false
+  isInstalled = false,
+  villageProfile
 }) => {
+  const currentLogo =
+    villageProfile?.logoUrl && !villageProfile.logoUrl.includes("Screenshot_2026-08-10_074401")
+      ? villageProfile.logoUrl
+      : OFFICIAL_MAGETAN_LOGO;
+
+  const currentDesa = villageProfile?.namaDesa || "DESA PONCOL";
+  const currentKecamatan = villageProfile?.namaKecamatan || "KECAMATAN PONCOL";
+
   const menuItems = [
     {
       id: "dashboard" as ActiveTab,
@@ -94,27 +105,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-72 bg-[#091122] text-slate-200 flex flex-col shrink-0 border-r border-slate-800/80 min-h-screen shadow-2xl relative z-20 select-none">
       {/* Top Header Brand */}
-      <div className="p-5 border-b border-slate-800/80">
+      <div className="p-4 sm:p-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-white/10 p-1 flex items-center justify-center overflow-hidden shadow-lg border border-slate-700/60 shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden shadow-lg border border-slate-700/60 shrink-0">
             <img
-              src="https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png"
-              alt="Logo WARGA+"
+              src={currentLogo}
+              alt={`Logo ${currentDesa}`}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-contain"
             />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-xl tracking-tight text-white flex items-center gap-1 font-sans">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-black text-lg tracking-tight text-white flex items-center gap-0.5 font-sans">
                 <span>WARGA</span>
                 <span className="text-emerald-400 font-black">+</span>
               </h1>
-              <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded-full">
                 v2.0
               </span>
             </div>
-            <p className="text-[11px] text-emerald-400 font-semibold tracking-wide mt-0.5">
+            <p className="text-[11px] text-emerald-400 font-bold tracking-wide truncate mt-0.5">
+              {currentDesa}
+            </p>
+            <p className="text-[9.5px] text-slate-400 font-medium truncate">
               Data Tepat, Desa Hebat
             </p>
           </div>

@@ -1,15 +1,25 @@
 import React, { useState } from "react";
 import { Lock, KeyRound, ShieldAlert, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { VillageProfile } from "../types";
+import { OFFICIAL_MAGETAN_LOGO, getVillageProfile } from "../lib/profile";
 
 interface LoginModalProps {
   onLogin: (password: string) => Promise<boolean | { success: boolean; message?: string }>;
+  villageProfile?: VillageProfile;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ onLogin }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, villageProfile }) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const profile = villageProfile || getVillageProfile();
+  const currentLogo =
+    profile?.logoUrl && !profile.logoUrl.includes("Screenshot_2026-08-10_074401")
+      ? profile.logoUrl
+      : OFFICIAL_MAGETAN_LOGO;
+  const currentDesa = profile?.namaDesa || "DESA PONCOL";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,19 +48,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin }) => {
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="bg-slate-900 p-6 text-white text-center border-b border-slate-800">
-          <div className="w-16 h-16 bg-white/10 p-1 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-700/60 mb-3 overflow-hidden">
+          <div className="w-16 h-16 bg-white p-2 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-700/60 mb-3 overflow-hidden">
             <img
-              src="https://res.cloudinary.com/maswardi/image/upload/v1786322675/Screenshot_2026-08-10_074401_i01n5t.png"
-              alt="Logo WARGA+"
+              src={currentLogo}
+              alt={`Logo ${currentDesa}`}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded-xl"
+              className="max-w-full max-h-full object-contain"
             />
           </div>
           <h1 className="text-2xl font-black tracking-tight flex items-center justify-center gap-1">
             <span>WARGA</span>
             <span className="text-emerald-400">+</span>
           </h1>
-          <p className="text-xs text-emerald-400 font-semibold tracking-wide mt-0.5">Data Tepat, Desa Hebat</p>
+          <p className="text-xs text-emerald-400 font-bold tracking-wide mt-0.5">
+            {currentDesa}
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium">Data Tepat, Desa Hebat</p>
         </div>
 
         {/* Login Body */}
