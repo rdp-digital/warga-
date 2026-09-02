@@ -51,10 +51,10 @@ export default function App() {
   // Village Profile & Kop Surat state
   const [villageProfile, setVillageProfile] = useState<VillageProfile>(getVillageProfile());
 
-  const handleSaveVillageProfile = (newProfile: VillageProfile) => {
+  const handleSaveVillageProfile = async (newProfile: VillageProfile) => {
     setVillageProfile(newProfile);
     saveVillageProfile(newProfile);
-    addToast("success", "Profil desa dan data Kop Surat berhasil diperbarui!");
+    addToast("success", "Profil desa dan logo berhasil disimpan & disinkronkan ke Google Spreadsheet!");
   };
 
 
@@ -184,11 +184,14 @@ export default function App() {
     if (res.success) {
       setPendudukList(res.data || []);
       setAuditLogs(res.logs || []);
+      if (res.profile) {
+        setVillageProfile(res.profile);
+      }
       if (res.usingDemoMode) {
         setConfigStatus((prev) => ({ ...prev, usingDemoMode: true }));
       }
       if (forceRefresh) {
-        addToast("success", "Data berhasil disinkronkan ulang langsung dari Google Sheets!");
+        addToast("success", "Data & pengaturan desa berhasil disinkronkan langsung dari Google Sheets!");
       }
     } else {
       addToast("error", res.message || "Gagal memuat data dari Google Sheets API.");

@@ -1,4 +1,5 @@
 import { VillageProfile } from "../types";
+import { fetchVillageProfileApi, saveVillageProfileApi } from "./api";
 
 export const OFFICIAL_MAGETAN_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Seal_of_Magetan_Regency.svg/500px-Seal_of_Magetan_Regency.svg.png";
 
@@ -37,14 +38,13 @@ export function getVillageProfile(): VillageProfile {
 
 export function saveVillageProfile(profile: VillageProfile): void {
   try {
-    // If the logo being saved is the app screenshot logo, clean it to official logo
     const cleanProfile = { ...profile };
     if (cleanProfile.logoUrl && cleanProfile.logoUrl.includes("Screenshot_2026-08-10_074401")) {
       cleanProfile.logoUrl = OFFICIAL_MAGETAN_LOGO;
     }
     localStorage.setItem(VILLAGE_PROFILE_KEY, JSON.stringify(cleanProfile));
     
-    // Sync to server in background
+    // Sync to Google Spreadsheet & Server in background
     syncProfileToServer(cleanProfile);
   } catch (e) {
     console.error("Error saving village profile:", e);
@@ -53,33 +53,28 @@ export function saveVillageProfile(profile: VillageProfile): void {
 
 export async function fetchServerVillageProfile(): Promise<VillageProfile | null> {
   try {
-    const res = await fetch("/api/village-profile");
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && data.profile) {
-        const prof = { ...data.profile };
-        if (prof.logoUrl && prof.logoUrl.includes("Screenshot_2026-08-10_074401")) {
-          prof.logoUrl = OFFICIAL_MAGETAN_LOGO;
-        }
-        localStorage.setItem(VILLAGE_PROFILE_KEY, JSON.stringify(prof));
-        return { ...DEFAULT_VILLAGE_PROFILE, ...prof };
+    const prof = await fetchVillageProfileApi();
+    if (prof) {
+      const cleanProf = { ...prof };
+      if (cleanProf.logoUrl && cleanProf.logoUrl.includes("Screenshot_2026-08-10_074401")) {
+        cleanProf.logoUrl = OFFICIAL_MAGETAN_LOGO;
       }
+      localStorage.setItem(VILLAGE_PROFILE_KEY, JSON.stringify(cleanProf));
+      return { ...DEFAULT_VILLAGE_PROFILE, ...cleanProf };
     }
   } catch (e) {
-    console.warn("Could not fetch village profile from server:", e);
+    console.warn("Could not fetch village profile from server/sheets:", e);
   }
   return null;
 }
 
-export async function syncProfileToServer(profile: VillageProfile): Promise<void> {
+export async function syncProfileToServer(profile: VillageProfile): Promise<boolean> {
   try {
-    await fetch("/api/village-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile })
-    });
+    const res = await saveVillageProfileApi(profile);
+    return Boolean(res && res.success);
   } catch (e) {
-    console.warn("Could not sync village profile to server:", e);
+    console.warn("Could not sync village profile to server/sheets:", e);
+    return false;
   }
 }
 

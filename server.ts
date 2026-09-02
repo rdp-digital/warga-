@@ -644,6 +644,24 @@ function handleInMemoryAction(action: string, payload: any) {
       };
     }
 
+    case "getVillageProfile":
+      return { success: true, profile: serverVillageProfile, usingDemoMode: true };
+
+    case "saveVillageProfile": {
+      const p = payload?.profile || payload || {};
+      let cleanProfile = { ...serverVillageProfile, ...p };
+      if (cleanProfile.logoUrl && cleanProfile.logoUrl.includes("Screenshot_2026-08-10_074401")) {
+        cleanProfile.logoUrl = OFFICIAL_MAGETAN_LOGO_SERVER;
+      }
+      serverVillageProfile = cleanProfile;
+      try {
+        const profileFilePath = path.join(process.cwd(), "village_profile.json");
+        fs.writeFileSync(profileFilePath, JSON.stringify(serverVillageProfile, null, 2), "utf-8");
+      } catch (e) {}
+      addLog("UBAH", "PENGATURAN", "Memperbarui Profil Desa & Kop Surat");
+      return { success: true, message: "Pengaturan desa berhasil disimpan", profile: serverVillageProfile, usingDemoMode: true };
+    }
+
     default:
       return { success: false, message: `Aksi ${action} tidak didukung` };
   }
@@ -667,14 +685,25 @@ apiRouter.get("/config-status", (req: Request, res: Response) => {
 });
 
 // Village profile & Kop Surat persistent endpoints
-apiRouter.get("/village-profile", (req: Request, res: Response) => {
+apiRouter.get("/village-profile", async (req: Request, res: Response) => {
+  if (isAppsScriptConfigured()) {
+    try {
+      const remoteRes = await sendToAppsScript(APPS_SCRIPT_URL, API_SECRET, "getVillageProfile");
+      if (remoteRes && remoteRes.profile) {
+        serverVillageProfile = { ...serverVillageProfile, ...remoteRes.profile };
+        return res.json({ success: true, profile: serverVillageProfile });
+      }
+    } catch (e) {
+      console.warn("Failed to get profile from Apps Script, returning server memory:", e);
+    }
+  }
   res.json({
     success: true,
     profile: serverVillageProfile
   });
 });
 
-apiRouter.post("/village-profile", (req: Request, res: Response) => {
+apiRouter.post("/village-profile", async (req: Request, res: Response) => {
   const { profile } = req.body || {};
   if (profile && typeof profile === "object") {
     let cleanProfile = { ...serverVillageProfile, ...profile };
@@ -689,6 +718,15 @@ apiRouter.post("/village-profile", (req: Request, res: Response) => {
       fs.writeFileSync(profileFilePath, JSON.stringify(serverVillageProfile, null, 2), "utf-8");
     } catch (e) {
       console.warn("Could not save village_profile.json file:", e);
+    }
+
+    // Forward to Apps Script if configured
+    if (isAppsScriptConfigured()) {
+      try {
+        await sendToAppsScript(APPS_SCRIPT_URL, API_SECRET, "saveVillageProfile", { profile: serverVillageProfile });
+      } catch (err) {
+        console.warn("Failed to sync profile to Google Apps Script:", err);
+      }
     }
 
     return res.json({ success: true, profile: serverVillageProfile });

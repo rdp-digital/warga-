@@ -1,4 +1,4 @@
-import { Penduduk, LogAudit, ConfigStatus } from "../types";
+import { Penduduk, LogAudit, ConfigStatus, VillageProfile } from "../types";
 
 const TOKEN_KEY = "siak_admin_token";
 
@@ -317,13 +317,22 @@ async function callSiakApi(action: string, payload?: any): Promise<any> {
   throw new Error("Gagal terhubung ke API backend");
 }
 
-export async function fetchAllData(forceRefresh = false): Promise<{ success: boolean; data: Penduduk[]; logs: LogAudit[]; usingDemoMode?: boolean; cached?: boolean; message?: string }> {
+export async function fetchAllData(forceRefresh = false): Promise<{ success: boolean; data: Penduduk[]; logs: LogAudit[]; profile?: VillageProfile; usingDemoMode?: boolean; cached?: boolean; message?: string }> {
   try {
     const res = await callSiakApi("getAll", { refresh: forceRefresh });
+    
+    // Auto-update cached village profile if returned by Google Apps Script / Server
+    if (res.profile && typeof res.profile === "object") {
+      try {
+        localStorage.setItem("WARGA_PLUS_VILLAGE_PROFILE", JSON.stringify(res.profile));
+      } catch (e) {}
+    }
+
     return {
       success: res.success !== false,
       data: res.data || [],
       logs: res.logs || [],
+      profile: res.profile,
       usingDemoMode: res.usingDemoMode,
       cached: res.cached,
       message: res.message
@@ -335,6 +344,46 @@ export async function fetchAllData(forceRefresh = false): Promise<{ success: boo
       logs: [],
       message: err?.message || "Gagal mengambil data kependudukan"
     };
+  }
+}
+
+export async function fetchVillageProfileApi(): Promise<VillageProfile | null> {
+  try {
+    const res = await callSiakApi("getVillageProfile");
+    if (res && res.profile) {
+      return res.profile;
+    }
+  } catch (e) {
+    // Fallback to GET on server or direct
+    try {
+      const resp = await fetch("/api/village-profile");
+      if (resp.ok) {
+        const d = await resp.json();
+        if (d && d.profile) return d.profile;
+      }
+    } catch (err) {}
+  }
+  return null;
+}
+
+export async function saveVillageProfileApi(profile: VillageProfile): Promise<{ success: boolean; message?: string; profile?: VillageProfile }> {
+  try {
+    const res = await callSiakApi("saveVillageProfile", { profile });
+    return res;
+  } catch (err: any) {
+    // Fallback to /api/village-profile POST
+    try {
+      const resp = await fetch("/api/village-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile })
+      });
+      if (resp.ok) {
+        const d = await resp.json();
+        return d;
+      }
+    } catch (e) {}
+    return { success: false, message: err?.message || "Gagal menyimpan profil ke server" };
   }
 }
 

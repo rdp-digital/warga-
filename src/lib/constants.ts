@@ -159,6 +159,7 @@ export const APPS_SCRIPT_CODE = `/**
 var SPREADSHEET_ID = ""; // Kosongkan agar otomatis menggunakan Google Sheet tempat Apps Script dipasang
 var SHEET_PENDUDUK_NAME = "Penduduk";
 var SHEET_LOG_NAME = "Log";
+var SHEET_CONFIG_NAME = "Pengaturan";
 var DEFAULT_API_SECRET = "SIAK_SECRET_KEY_2026";
 
 var HEADERS = [
@@ -169,6 +170,20 @@ var HEADERS = [
 ];
 
 var LOG_HEADERS = ["Waktu", "Aksi", "NIK Terkait", "Detail Perubahan"];
+
+var DEFAULT_CONFIG = {
+  namaKabupaten: "PEMERINTAH KABUPATEN MAGETAN",
+  namaKecamatan: "KECAMATAN PONCOL",
+  namaDesa: "DESA PONCOL",
+  alamatKantor: "Jl. Slamet Riyadi, Desa Poncol",
+  emailKantor: "pemdesponcol@gmail.com",
+  websiteDesa: "http://poncol.magetan.go.id",
+  kodePos: "63362",
+  namaKepalaDesa: "SAMSUHARI",
+  nipKepalaDesa: "-",
+  kodeDesa: "35.20.01.2001",
+  logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Seal_of_Magetan_Regency.svg/500px-Seal_of_Magetan_Regency.svg.png"
+};
 
 function getSpreadsheet() {
   var ss = null;
@@ -241,7 +256,107 @@ function writeLog(ss, aksi, nikTerkait, detail) {
   }
 }
 
+function getVillageProfileData(ss) {
+  try {
+    var sheet = ss.getSheetByName(SHEET_CONFIG_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_CONFIG_NAME);
+      sheet.appendRow(["Parameter", "Nilai", "Keterangan"]);
+      sheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#e2e8f0");
+      
+      var defaultRows = [
+        ["namaKabupaten", DEFAULT_CONFIG.namaKabupaten, "Nama Kabupaten / Kota"],
+        ["namaKecamatan", DEFAULT_CONFIG.namaKecamatan, "Nama Kecamatan"],
+        ["namaDesa", DEFAULT_CONFIG.namaDesa, "Nama Desa / Kelurahan"],
+        ["alamatKantor", DEFAULT_CONFIG.alamatKantor, "Alamat Kantor Desa"],
+        ["emailKantor", DEFAULT_CONFIG.emailKantor, "Email Resmi"],
+        ["websiteDesa", DEFAULT_CONFIG.websiteDesa, "Website Resmi"],
+        ["kodePos", DEFAULT_CONFIG.kodePos, "Kode Pos"],
+        ["namaKepalaDesa", DEFAULT_CONFIG.namaKepalaDesa, "Nama Kepala Desa"],
+        ["nipKepalaDesa", DEFAULT_CONFIG.nipKepalaDesa, "NIP Kepala Desa"],
+        ["kodeDesa", DEFAULT_CONFIG.kodeDesa, "Kode Wilayah Desa"],
+        ["logoUrl", DEFAULT_CONFIG.logoUrl, "URL atau Base64 Logo Resmi"]
+      ];
+      for (var r = 0; r < defaultRows.length; r++) {
+        sheet.appendRow(defaultRows[r]);
+      }
+      return DEFAULT_CONFIG;
+    }
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return DEFAULT_CONFIG;
+
+    var configObj = {};
+    for (var i = 1; i < data.length; i++) {
+      var key = String(data[i][0] || "").trim();
+      var val = data[i][1];
+      if (key) {
+        configObj[key] = val !== undefined && val !== null ? String(val) : "";
+      }
+    }
+
+    return Object.assign({}, DEFAULT_CONFIG, configObj);
+  } catch (e) {
+    return DEFAULT_CONFIG;
+  }
+}
+
+function handleGetVillageProfile(ss) {
+  var prof = getVillageProfileData(ss);
+  return respondJSON({ success: true, profile: prof });
+}
+
+function handleSaveVillageProfile(ss, payload) {
+  var newProf = payload.profile || payload || {};
+  var sheet = ss.getSheetByName(SHEET_CONFIG_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_CONFIG_NAME);
+    sheet.appendRow(["Parameter", "Nilai", "Keterangan"]);
+    sheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#e2e8f0");
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var keyRowMap = {};
+  for (var i = 1; i < data.length; i++) {
+    var k = String(data[i][0] || "").trim();
+    if (k) keyRowMap[k] = i + 1; // 1-indexed
+  }
+
+  var keys = [
+    "namaKabupaten", "namaKecamatan", "namaDesa", "alamatKantor",
+    "emailKantor", "websiteDesa", "kodePos", "namaKepalaDesa",
+    "nipKepalaDesa", "kodeDesa", "logoUrl"
+  ];
+
+  for (var j = 0; j < keys.length; j++) {
+    var key = keys[j];
+    var val = newProf[key] !== undefined ? String(newProf[key]) : "";
+    if (keyRowMap[key]) {
+      sheet.getRange(keyRowMap[key], 2).setValue(val);
+    } else {
+      sheet.appendRow([key, val, "Pengaturan " + key]);
+    }
+  }
+
+  writeLog(ss, "UBAH", "PENGATURAN", "Memperbarui Profil Desa & Logo Kop Surat");
+
+  return respondJSON({
+    success: true,
+    message: "Pengaturan desa dan logo berhasil disimpan di Google Spreadsheet",
+    profile: getVillageProfileData(ss)
+  });
+}
+
 function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+  var ss = getSpreadsheet();
+  if (action === "read" || action === "getAll") {
+    var sheet = getOrCreateSheet(ss, SHEET_PENDUDUK_NAME, HEADERS);
+    return handleGetAll(sheet, ss);
+  }
+  if (action === "getProfile" || action === "getVillageProfile") {
+    return handleGetVillageProfile(ss);
+  }
   return respondJSON({
     status: "ok",
     message: "SIAK API Google Apps Script Running Successfully",
@@ -278,6 +393,12 @@ function doPost(e) {
       return handleDelete(sheet, ss, payload);
     } else if (action === "getLogs") {
       return handleGetLogs(ss);
+    } else if (action === "getVillageProfile" || action === "getProfile") {
+      return handleGetVillageProfile(ss);
+    } else if (action === "saveVillageProfile" || action === "saveProfile") {
+      return handleSaveVillageProfile(ss, payload);
+    } else if (action === "batchUpdateBirthDates") {
+      return handleBatchUpdateDates(sheet, ss, payload);
     } else if (action === "seedDemoData") {
       return handleSeedDemoData(sheet, ss);
     } else {
@@ -291,21 +412,20 @@ function doPost(e) {
 
 function handleGetAll(sheet, ss) {
   var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) {
-    return respondJSON({ success: true, data: [], logs: getLogsData(ss) });
-  }
-
   var list = [];
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (!row[2]) continue;
-    list.push(rowToPenduduk(row));
+  if (data.length > 1) {
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (!row[2]) continue;
+      list.push(rowToPenduduk(row));
+    }
   }
 
   return respondJSON({
     success: true,
     data: list,
-    logs: getLogsData(ss)
+    logs: getLogsData(ss),
+    profile: getVillageProfileData(ss)
   });
 }
 

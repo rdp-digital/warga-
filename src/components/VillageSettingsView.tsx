@@ -6,7 +6,7 @@ import { DEFAULT_VILLAGE_PROFILE, OFFICIAL_MAGETAN_LOGO } from "../lib/profile";
 
 interface VillageSettingsViewProps {
   profile: VillageProfile;
-  onSaveProfile: (newProfile: VillageProfile) => void;
+  onSaveProfile: (newProfile: VillageProfile) => void | Promise<void>;
 }
 
 export const VillageSettingsView: React.FC<VillageSettingsViewProps> = ({
@@ -15,6 +15,12 @@ export const VillageSettingsView: React.FC<VillageSettingsViewProps> = ({
 }) => {
   const [formData, setFormData] = useState<VillageProfile>({ ...profile });
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Keep formData in sync if profile changes from background cloud fetch
+  React.useEffect(() => {
+    setFormData({ ...profile });
+  }, [profile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,19 +44,29 @@ export const VillageSettingsView: React.FC<VillageSettingsViewProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveProfile(formData);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    setIsSaving(true);
+    try {
+      await onSaveProfile(formData);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleResetDefault = () => {
+  const handleResetDefault = async () => {
     if (window.confirm("Apakah Anda yakin ingin mengembalikan data Kop Surat ke setelan awal Desa Poncol, Magetan?")) {
       setFormData(DEFAULT_VILLAGE_PROFILE);
-      onSaveProfile(DEFAULT_VILLAGE_PROFILE);
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
+      setIsSaving(true);
+      try {
+        await onSaveProfile(DEFAULT_VILLAGE_PROFILE);
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 4000);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -65,17 +81,19 @@ export const VillageSettingsView: React.FC<VillageSettingsViewProps> = ({
           <div>
             <h2 className="text-xl font-extrabold tracking-tight">Pengaturan Profil Desa &amp; Kop Surat</h2>
             <p className="text-xs text-slate-300 mt-0.5">
-              Sesuaikan data pemerintah desa, alamat kantor, kontak, dan logo yang akan digunakan secara otomatis pada seluruh dokumen cetak (Rekap RT &amp; Kartu Keluarga).
+              Sesuaikan data pemerintah desa, alamat kantor, kontak, dan logo yang akan disimpan otomatis di Google Spreadsheet (Tab <strong>Pengaturan</strong>) dan tersinkronisasi di semua perangkat &amp; browser.
             </p>
           </div>
         </div>
 
-        {savedSuccess && (
-          <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-2 rounded-xl text-xs font-bold animate-fade-in">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span>Pengaturan berhasil disimpan!</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {savedSuccess && (
+            <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-4 py-2 rounded-xl text-xs font-bold animate-fade-in">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <span>Tersimpan di Spreadsheet &amp; Browser!</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -284,10 +302,20 @@ export const VillageSettingsView: React.FC<VillageSettingsViewProps> = ({
             <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2"
+                disabled={isSaving}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2"
               >
-                <Save className="w-4 h-4" />
-                <span>Simpan Perubahan Profile</span>
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Menyimpan ke Spreadsheet...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Simpan Pengaturan Profil Desa</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
